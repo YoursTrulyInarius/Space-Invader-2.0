@@ -1,5 +1,5 @@
 # Space Invaders
-aaaa
+aa
 This is a **weekly commit project** where features and improvements are added incrementally each week.
 
 ## Setup Instructions
