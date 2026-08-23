@@ -19,6 +19,8 @@ class GameManager:
         self.reload_button_rect = pygame.Rect(screen_width // 2 - 100, screen_height // 2 + 50, 200, 50)
         self.name_input_rect = pygame.Rect(screen_width // 2 - 150, screen_height // 2, 300, 50)
         self.start_button_rect = pygame.Rect(screen_width // 2 - 100, screen_height // 2 + 80, 200, 50)
+        self.rename_button_rect = pygame.Rect(screen_width // 2 - 100, screen_height // 2 + 140, 200, 50)
+        self.old_name = ""
         self.reset_game(first_run=True)
 
     def reset_game(self, first_run=False):
@@ -63,6 +65,11 @@ class GameManager:
                             self.player_name = "Guest"
                         self.game_state = "playing"
                         self.spawn_enemies()
+                    elif self.rename_button_rect.collidepoint(event.pos):
+                        if self.player_name.strip() != "":
+                            self.old_name = self.player_name
+                            self.player_name = ""
+                            self.game_state = "rename_input"
             
             self.screen.fill((0, 0, 0))
             title_text = self.big_font.render("Space Invaders", True, (0, 255, 0))
@@ -78,6 +85,47 @@ class GameManager:
             pygame.draw.rect(self.screen, (50, 150, 50), self.start_button_rect)
             start_btn_text = self.font.render("START", True, (255, 255, 255))
             self.screen.blit(start_btn_text, (self.start_button_rect.x + (self.start_button_rect.width - start_btn_text.get_width()) // 2, self.start_button_rect.y + (self.start_button_rect.height - start_btn_text.get_height()) // 2))
+            
+            pygame.draw.rect(self.screen, (150, 150, 50), self.rename_button_rect)
+            rename_btn_text = self.font.render("RENAME", True, (255, 255, 255))
+            self.screen.blit(rename_btn_text, (self.rename_button_rect.x + (self.rename_button_rect.width - rename_btn_text.get_width()) // 2, self.rename_button_rect.y + (self.rename_button_rect.height - rename_btn_text.get_height()) // 2))
+            
+            return
+
+        if self.game_state == "rename_input":
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        self.player_name = self.player_name[:-1]
+                    elif event.key == pygame.K_RETURN:
+                        if self.player_name.strip() != "":
+                            self.db.update_player_username(self.old_name, self.player_name.strip())
+                        self.game_state = "name_input"
+                        self.player_name = self.player_name.strip()
+                    else:
+                        if len(self.player_name) < 15:
+                            self.player_name += event.unicode
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if self.start_button_rect.collidepoint(event.pos):
+                        if self.player_name.strip() != "":
+                            self.db.update_player_username(self.old_name, self.player_name.strip())
+                        self.game_state = "name_input"
+                        self.player_name = self.player_name.strip()
+            
+            self.screen.fill((0, 0, 0))
+            title_text = self.big_font.render("Rename Profile", True, (0, 255, 0))
+            self.screen.blit(title_text, (self.screen_width // 2 - title_text.get_width() // 2, self.screen_height // 2 - 150))
+            
+            prompt_text = self.font.render(f"New name for {self.old_name}:", True, (255, 255, 255))
+            self.screen.blit(prompt_text, (self.screen_width // 2 - prompt_text.get_width() // 2, self.screen_height // 2 - 50))
+            
+            pygame.draw.rect(self.screen, (255, 255, 255), self.name_input_rect, 2)
+            name_text = self.font.render(self.player_name, True, (255, 255, 255))
+            self.screen.blit(name_text, (self.name_input_rect.x + 10, self.name_input_rect.y + 5))
+            
+            pygame.draw.rect(self.screen, (50, 150, 150), self.start_button_rect)
+            update_btn_text = self.font.render("UPDATE", True, (255, 255, 255))
+            self.screen.blit(update_btn_text, (self.start_button_rect.x + (self.start_button_rect.width - update_btn_text.get_width()) // 2, self.start_button_rect.y + (self.start_button_rect.height - update_btn_text.get_height()) // 2))
             
             return
 
