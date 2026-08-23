@@ -8,6 +8,26 @@ This is a **weekly commit project** where features and improvements are added in
 - **Player Profiles**: Enter your username on the new start screen to track your scores. You can also rename your profile directly from the start screen!
 - **In-Game Leaderboards**: At the end of every game, the top 5 highest scores are displayed on the Game Over screen.
 
+## Database Schema
+
+The game uses a local MySQL database named `space_invader_db` with the following schema:
+
+```sql
+CREATE TABLE IF NOT EXISTS players (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS scores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT,
+    score INT NOT NULL,
+    achieved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+);
+```
+
 ## Setup Instructions
 
 Follow these step-by-step instructions to set up and run the game locally on your machine.
