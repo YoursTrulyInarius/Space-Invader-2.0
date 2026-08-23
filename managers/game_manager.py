@@ -4,18 +4,24 @@ from entities.player import Player
 from entities.button import MobileButtons
 from entities.enemy import Enemy
 from entities.bullet import Bullet
+from managers.db_manager import DBManager
 
 class GameManager:
-    def __init__(self, screen, screen_width, screen_height):
+    def __init__(self, screen, screen_width, screen_height, player_name=""):
         self.screen = screen
         self.screen_width = screen_width
         self.screen_height = screen_height
+        self.player_name = player_name
+        self.db = DBManager(user="root", password="")
+        self.leaderboard = []
         self.font = pygame.font.SysFont("Arial", 36)
         self.big_font = pygame.font.SysFont("Arial", 64)
         self.reload_button_rect = pygame.Rect(screen_width // 2 - 100, screen_height // 2 + 50, 200, 50)
-        self.reset_game()
+        self.name_input_rect = pygame.Rect(screen_width // 2 - 150, screen_height // 2, 300, 50)
+        self.start_button_rect = pygame.Rect(screen_width // 2 - 100, screen_height // 2 + 80, 200, 50)
+        self.reset_game(first_run=True)
 
-    def reset_game(self):
+    def reset_game(self, first_run=False):
         self.player = Player(self.screen_width, self.screen_height)
         self.buttons = MobileButtons()
         self.bullet = None
@@ -23,12 +29,13 @@ class GameManager:
 
         self.score = 0
         self.spawn_number = 5
-        self.game_state = "playing"
+        self.game_state = "name_input" if first_run else "playing"
 
         self.player_history = []
         self.timer = 0
         self.state_timer = 0
-        self.spawn_enemies()
+        if self.game_state != "name_input":
+            self.spawn_enemies()
 
     def spawn_enemies(self):
         self.enemies = []
@@ -37,6 +44,43 @@ class GameManager:
         self.timer = 0
 
     def update(self, events):
+        if self.game_state == "name_input":
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        self.player_name = self.player_name[:-1]
+                    elif event.key == pygame.K_RETURN:
+                        if self.player_name.strip() == "":
+                            self.player_name = "Guest"
+                        self.game_state = "playing"
+                        self.spawn_enemies()
+                    else:
+                        if len(self.player_name) < 15:
+                            self.player_name += event.unicode
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if self.start_button_rect.collidepoint(event.pos):
+                        if self.player_name.strip() == "":
+                            self.player_name = "Guest"
+                        self.game_state = "playing"
+                        self.spawn_enemies()
+            
+            self.screen.fill((0, 0, 0))
+            title_text = self.big_font.render("Space Invaders", True, (0, 255, 0))
+            self.screen.blit(title_text, (self.screen_width // 2 - title_text.get_width() // 2, self.screen_height // 2 - 150))
+            
+            prompt_text = self.font.render("Enter your name:", True, (255, 255, 255))
+            self.screen.blit(prompt_text, (self.screen_width // 2 - prompt_text.get_width() // 2, self.screen_height // 2 - 50))
+            
+            pygame.draw.rect(self.screen, (255, 255, 255), self.name_input_rect, 2)
+            name_text = self.font.render(self.player_name, True, (255, 255, 255))
+            self.screen.blit(name_text, (self.name_input_rect.x + 10, self.name_input_rect.y + 5))
+            
+            pygame.draw.rect(self.screen, (50, 150, 50), self.start_button_rect)
+            start_btn_text = self.font.render("START", True, (255, 255, 255))
+            self.screen.blit(start_btn_text, (self.start_button_rect.x + (self.start_button_rect.width - start_btn_text.get_width()) // 2, self.start_button_rect.y + (self.start_button_rect.height - start_btn_text.get_height()) // 2))
+            
+            return
+
         if self.game_state == "playing" or self.game_state == "blinking":
             self.player_history.append((self.player.x, self.player.y))
             if len(self.player_history) > 60:
@@ -96,6 +140,8 @@ class GameManager:
 
             if self.state_timer >= 180:
                 self.game_state = "game_over"
+                self.db.save_score(self.player_name, self.score)
+                self.leaderboard = self.db.get_top_scores(limit=5)
 
         elif self.game_state == "game_over":
             for event in events:
@@ -118,11 +164,26 @@ class GameManager:
 
         if self.game_state == "game_over":
             go_text = self.big_font.render("GAME OVER", True, (255, 50, 50))
-            self.screen.blit(go_text, (self.screen_width // 2 - go_text.get_width() // 2, self.screen_height // 2 - 120))
+            self.screen.blit(go_text, (self.screen_width // 2 - go_text.get_width() // 2, 50))
 
             final_score_text = self.font.render(f"Final Score: {self.score}", True, (255, 255, 255))
-            self.screen.blit(final_score_text, (self.screen_width // 2 - final_score_text.get_width() // 2, self.screen_height // 2 - 20))
+            self.screen.blit(final_score_text, (self.screen_width // 2 - final_score_text.get_width() // 2, 130))
 
+            lb_title_text = self.font.render("Leaderboard", True, (255, 255, 0))
+            self.screen.blit(lb_title_text, (self.screen_width // 2 - lb_title_text.get_width() // 2, 180))
+            
+            y_offset = 230
+            if self.leaderboard:
+                for i, entry in enumerate(self.leaderboard):
+                    lb_text = self.font.render(f"{i+1}. {entry['username']} - {entry['score']}", True, (200, 200, 200))
+                    self.screen.blit(lb_text, (self.screen_width // 2 - lb_text.get_width() // 2, y_offset))
+                    y_offset += 40
+            else:
+                lb_text = self.font.render("No scores available", True, (200, 200, 200))
+                self.screen.blit(lb_text, (self.screen_width // 2 - lb_text.get_width() // 2, y_offset))
+                y_offset += 40
+
+            self.reload_button_rect.y = y_offset + 30
             pygame.draw.rect(self.screen, (50, 150, 50), self.reload_button_rect)
             btn_text = self.font.render("RELOAD", True, (255, 255, 255))
             self.screen.blit(btn_text, (self.reload_button_rect.x + (self.reload_button_rect.width - btn_text.get_width()) // 2, self.reload_button_rect.y + (self.reload_button_rect.height - btn_text.get_height()) // 2))

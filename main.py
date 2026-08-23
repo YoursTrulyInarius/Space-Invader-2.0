@@ -1,11 +1,11 @@
 import pygame  # import the pygame library
 from managers.game_manager import GameManager
+import sys
 
 pygame.init()  # initialize pygame modules
 
 SCREEN_WIDTH = 800  # width of the game window
 SCREEN_HEIGHT = 600  # height of the game window
-
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # create the display surface
 pygame.display.set_caption("Space Invaders by: Cabardo, Sonjeev C.")  # set the window title

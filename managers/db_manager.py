@@ -92,3 +92,33 @@ class DBManager:
             return []
         finally:
             self.close()
+
+    def update_player_username(self, old_username, new_username):
+        if not self.connect():
+            return False
+
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("UPDATE players SET username = %s WHERE username = %s", (new_username, old_username))
+            self.connection.commit()
+            return cursor.rowcount > 0
+        except Error as e:
+            print(f"Error updating player username: {e}")
+            return False
+        finally:
+            self.close()
+
+    def delete_player(self, username):
+        if not self.connect():
+            return False
+
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("DELETE FROM players WHERE username = %s", (username,))
+            self.connection.commit()
+            return cursor.rowcount > 0
+        except Error as e:
+            print(f"Error deleting player: {e}")
+            return False
+        finally:
+            self.close()
