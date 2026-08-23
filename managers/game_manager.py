@@ -59,8 +59,10 @@ class GameManager:
                             self.db.update_player_username(self.old_name, self.player_name)
                         self.game_state = "playing"
                         self.spawn_enemies()
+                    elif event.key == pygame.K_TAB:
+                        pass
                     else:
-                        if len(self.player_name) < 15:
+                        if len(self.player_name) < 15 and event.unicode.isprintable():
                             self.player_name += event.unicode
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if self.start_button_rect.collidepoint(event.pos):
