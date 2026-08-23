@@ -2,6 +2,12 @@
 
 This is a **weekly commit project** where features and improvements are added incrementally each week.
 
+## Features Added Recently
+
+- **Database Integration**: Saves your Space Invaders score to a local MySQL database!
+- **Player Profiles**: Enter your username on the new start screen to track your scores. You can also rename your profile directly from the start screen!
+- **In-Game Leaderboards**: At the end of every game, the top 5 highest scores are displayed on the Game Over screen.
+
 ## Setup Instructions
 
 Follow these step-by-step instructions to set up and run the game locally on your machine.
