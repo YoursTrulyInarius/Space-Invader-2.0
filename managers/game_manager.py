@@ -221,7 +221,7 @@ class GameManager:
         # PROFILE button (smaller, outlined style)
         pygame.draw.rect(self.screen, DARK_BTN, self.profile_btn_rect, border_radius=8)
         pygame.draw.rect(self.screen, ACCENT,   self.profile_btn_rect, 2, border_radius=8)
-        p_txt = self.small_font.render("✦  EDIT PROFILE", True, ACCENT)
+        p_txt = self.small_font.render(">>  EDIT PROFILE", True, ACCENT)
         self.screen.blit(p_txt, (self.profile_btn_rect.centerx - p_txt.get_width() // 2,
                                  self.profile_btn_rect.centery - p_txt.get_height() // 2))
 
@@ -295,7 +295,7 @@ class GameManager:
 
         # --- Save & Back button ---
         pygame.draw.rect(self.screen, SEL_BTN, self.profile_back_rect, border_radius=8)
-        back_txt = self.font.render("💾  Save & Back", True, WHITE)
+        back_txt = self.font.render("[ Save & Back ]", True, WHITE)
         self.screen.blit(back_txt, (self.profile_back_rect.centerx - back_txt.get_width() // 2,
                                     self.profile_back_rect.centery - back_txt.get_height() // 2))
 
