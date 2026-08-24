@@ -9,11 +9,11 @@ from managers.db_manager import DBManager
 # --- Profile options ---
 SHIP_COLORS   = ["green", "blue", "red", "yellow", "purple"]
 SHIP_COLOR_RGB = {
-    "green":  (0, 220, 0),
-    "blue":   (0, 150, 255),
-    "red":    (255, 50, 50),
-    "yellow": (255, 220, 0),
-    "purple": (180, 0, 255),
+    "green":  (0,   255, 80),
+    "blue":   (60,  180, 255),
+    "red":    (255, 60,  60),
+    "yellow": (255, 230, 0),
+    "purple": (210, 0,   255),
 }
 CONTROL_SCHEMES = ["arrows", "wasd"]
 DIFFICULTIES    = ["easy", "normal", "hard"]
@@ -154,7 +154,7 @@ class GameManager:
     def spawn_enemies(self):
         self.enemies = []
         for i in range(self.spawn_number):
-            self.enemies.append(Enemy(i, self.spawn_number, self.screen_width))
+            self.enemies.append(Enemy(i, self.spawn_number, self.screen_width, self.screen_height))
         self.timer = 0
 
     # ------------------------------------------------------------------
@@ -282,12 +282,7 @@ class GameManager:
         self.profile_option_rects += [(r, "control", v) for r, v in rects]
         y += 60
 
-        # --- Difficulty row ---
-        rects = draw_option_row(self.screen, self.small_font,
-                                "Difficulty:", DIFFICULTIES, self.profile_difficulty,
-                                y, x_start, item_w=100)
-        self.profile_option_rects += [(r, "difficulty", v) for r, v in rects]
-        y += 70
+        # Difficulty row intentionally hidden for now
 
         # --- Legend ---
         legend = self.small_font.render("Arrow Keys / WASD — move    SPACE — shoot", True, GRAY)
@@ -327,8 +322,9 @@ class GameManager:
             )
 
             if (screen_button_fired or keyboard_fired) and self.bullet is None:
-                self.bullet = Bullet(self.player.x + self.player.width // 2 - 16,
-                                     self.player.y)
+                # Spawn bullet at the horizontal center of the ship
+                bullet_x = self.player.x + self.player.width // 2 - 16  # 16 = half bullet width (32)
+                self.bullet = Bullet(bullet_x, self.player.y)
 
             self.player.keep_inside_screen()
 
@@ -342,7 +338,8 @@ class GameManager:
                 waiting = [e for e in self.enemies if e.state == "waiting"]
                 if waiting:
                     chosen = random.choice(waiting)
-                    tx, ty = self.player_history[0]
+                    # Target the player's most recent (current) position
+                    tx, ty = self.player_history[-1] if self.player_history else (self.player.x, self.player.y)
                     chosen.start_drop(tx, ty)
                     self.timer = 0
 
