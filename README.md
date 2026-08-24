@@ -2,7 +2,27 @@
 
 This is a **weekly commit project** where features and improvements are added incrementally each week.
 
-## Features Added Recently
+## Latest Update — Week 3
+
+### 🎨 Ship Color Tinting (Fixed)
+- Ship colors (Green, Blue, Red, Yellow, Purple) now display correctly for all choices.
+- **Root cause:** The original `myship.png` asset is red-tinted, so multiplying by non-red colors zeroed out those channels and produced a dark/invisible ship.
+- **Fix:** The base image is now converted to luminance-correct **grayscale** once at load time, then `BLEND_RGB_MULT` is applied with the chosen color. Grayscale × any color = correct hue at full brightness, with the original alpha/transparency preserved perfectly.
+- Grayscale brightness is boosted by ×1.9 before tinting so all color swatches appear vivid and clear.
+
+### 🚀 Enemy Movement (Fixed)
+- Enemies now correctly dive toward the **player's current position** instead of their position from 60 frames ago.
+- Enemy off-screen detection now uses actual screen dimensions instead of hardcoded pixel values, preventing enemies from lingering outside the visible area.
+
+### 🧩 Player Profile Screen (Cleaned Up)
+- The **Difficulty row** has been temporarily removed from the Profile screen until difficulty logic is fully implemented.
+- Color swatches in the profile UI now match the actual in-game ship tint colors exactly.
+
+---
+
+## Previous Updates
+
+### Week 2 — Player Profiles & Leaderboards
 
 - **Database Integration**: Saves your Space Invaders score to a local MySQL database!
 - **Player Profiles**: Enter your username on the new start screen to track your scores. You can also rename your profile directly from the start screen!
