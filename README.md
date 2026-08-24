@@ -66,7 +66,6 @@ Activate the newly created virtual environment. Since you are on Windows, use th
 
 ```bash
 .\.venv\Scripts\activate
-or .venv\scripts\activate
 ```
 
 *(If you are using bash/Git Bash, use `source .venv/Scripts/activate`)*
