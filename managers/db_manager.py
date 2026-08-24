@@ -108,6 +108,58 @@ class DBManager:
         finally:
             self.close()
 
+    def get_player_profile(self, username):
+        if not self.connect():
+            return None
+
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM players WHERE username = %s", (username,))
+            return cursor.fetchone()
+        except Error as e:
+            print(f"Error retrieving player profile: {e}")
+            return None
+        finally:
+            self.close()
+
+    def update_player_profile(self, username, ship_color=None, player_title=None, control_scheme=None, difficulty=None):
+        if not self.connect():
+            return False
+
+        try:
+            cursor = self.connection.cursor()
+            
+            updates = []
+            params = []
+            
+            if ship_color:
+                updates.append("ship_color = %s")
+                params.append(ship_color)
+            if player_title:
+                updates.append("player_title = %s")
+                params.append(player_title)
+            if control_scheme:
+                updates.append("control_scheme = %s")
+                params.append(control_scheme)
+            if difficulty:
+                updates.append("difficulty = %s")
+                params.append(difficulty)
+                
+            if not updates:
+                return True
+                
+            params.append(username)
+            query = f"UPDATE players SET {', '.join(updates)} WHERE username = %s"
+            
+            cursor.execute(query, tuple(params))
+            self.connection.commit()
+            return cursor.rowcount > 0
+        except Error as e:
+            print(f"Error updating player profile: {e}")
+            return False
+        finally:
+            self.close()
+
     def delete_player(self, username):
         if not self.connect():
             return False
@@ -151,6 +203,25 @@ if __name__ == "__main__":
         update_success = db.update_player_username("test_user_123", "test_user_456")
         print(f"   -> Success: {update_success}")
         assert update_success, "Failed to update username"
+
+        # 4b. Update Profile
+        print("4b. Updating profile for 'test_user_456'...")
+        profile_success = db.update_player_profile(
+            "test_user_456", 
+            ship_color="blue", 
+            player_title="Galactic Hero",
+            control_scheme="wasd",
+            difficulty="hard"
+        )
+        print(f"   -> Success: {profile_success}")
+        assert profile_success, "Failed to update profile data"
+        
+        # 4c. Verify Profile Update
+        print("4c. Reading profile for 'test_user_456'...")
+        profile = db.get_player_profile("test_user_456")
+        print(f"   -> Profile Data: {profile}")
+        assert profile['ship_color'] == 'blue', "Ship color didn't update"
+        assert profile['difficulty'] == 'hard', "Difficulty didn't update"
 
         # 5. Delete
         print("5. Deleting test player 'test_user_456'...")
