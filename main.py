@@ -9,6 +9,10 @@ SCREEN_HEIGHT = 600  # height of the game window
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # create the display surface
 pygame.display.set_caption("Space Invaders by: Cabardo, Sonjeev C.")  # set the window title
+try:
+    pygame.scrap.init()  # enable clipboard access for Ctrl+V in name bar
+except Exception:
+    pass
 
 game_manager = GameManager(screen, SCREEN_WIDTH, SCREEN_HEIGHT)
 

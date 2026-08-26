@@ -176,14 +176,39 @@ class GameManager:
     def _update_name_input(self, events):
         for event in events:
             if event.type == pygame.KEYDOWN:
+                ctrl_held = pygame.key.get_mods() & pygame.KMOD_CTRL
                 if event.key == pygame.K_BACKSPACE:
-                    self.player_name = self.player_name[:-1]
+                    if ctrl_held or getattr(self, "_name_select_all", False):
+                        # Ctrl+Backspace OR Backspace after Ctrl+A: clear entire field
+                        self.player_name = ""
+                        self._name_select_all = False
+                    else:
+                        self.player_name = self.player_name[:-1]
+                elif event.key == pygame.K_a and ctrl_held:
+                    # Ctrl+A: clear field (select-all equivalent — next keypress replaces)
+                    self._name_select_all = True
+                elif event.key == pygame.K_v and ctrl_held:
+                    # Ctrl+V: paste from clipboard
+                    try:
+                        clipboard = pygame.scrap.get(pygame.SCRAP_TEXT)
+                        if clipboard:
+                            text = clipboard.decode("utf-8", errors="ignore").replace("\x00", "").split("\n")[0]
+                            combined = self.player_name + text
+                            self.player_name = combined[:15]
+                    except Exception:
+                        pass
                 elif event.key == pygame.K_RETURN:
                     self._start_game()
                     return
                 elif event.key != pygame.K_TAB and event.unicode.isprintable():
-                    if len(self.player_name) < 15:
+                    if getattr(self, "_name_select_all", False):
+                        # Any printable key after Ctrl+A replaces the whole field
+                        self.player_name = event.unicode
+                        self._name_select_all = False
+                    elif len(self.player_name) < 15:
                         self.player_name += event.unicode
+                else:
+                    self._name_select_all = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.start_button_rect.collidepoint(event.pos):
                     self._start_game()
