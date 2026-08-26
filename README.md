@@ -18,6 +18,12 @@ This is a **weekly commit project** where features and improvements are added in
 - The **Difficulty row** has been temporarily removed from the Profile screen until difficulty logic is fully implemented.
 - Color swatches in the profile UI now match the actual in-game ship tint colors exactly.
 
+### ⌨️ Name Bar Input Fixes
+- **Ctrl+A** now acts as "select all" — the next key typed replaces the entire name instantly.
+- **Ctrl+A → Backspace** correctly clears the entire name field (previously only worked with a second Ctrl press).
+- **Ctrl+Backspace** clears the full name in one keystroke.
+- **Ctrl+V** pastes text from the clipboard directly into the name field.
+
 ---
 
 ## Previous Updates
