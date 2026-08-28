@@ -1,5 +1,5 @@
 # Space Invaders
-fddfdvbcbvccnb
+fddfdvbcbvccn
 This is a **weekly commit project** where features and improvements are added incrementally each week.
 
 ## Latest Update — Week 3
