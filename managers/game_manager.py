@@ -174,6 +174,14 @@ def generate_stars(screen_width, screen_height, count=150):
     return stars
 
 
+def clean_username(username):
+    """Filter out non-printable ASCII or control characters from username."""
+    if not username:
+        return "Guest"
+    cleaned = "".join(c for c in username if c.isprintable() and ord(c) >= 32)
+    return cleaned.strip() or "Guest"
+
+
 class GameManager:
     def __init__(self, screen, screen_width, screen_height, player_name=""):
         self.screen = screen
@@ -608,12 +616,6 @@ class GameManager:
         self._draw_leaderboard()
 
     def _draw_leaderboard(self):
-        def clean_username(username):
-            if not username:
-                return "Guest"
-            cleaned = "".join(c for c in username if c.isprintable() and ord(c) >= 32)
-            return cleaned.strip() or "Guest"
-
         self.screen.fill(DARK_BG)
         draw_stars(self.screen, self.stars)
 
@@ -970,11 +972,11 @@ class GameManager:
     def _update_game_over(self, events):
         cx = self.screen_width // 2
 
-        # Dynamic rects based on leaderboard length
-        lb_count = len(self.leaderboard)
-        lb_height = max(lb_count, 1) * 38
-        view_lb_y = 220 + lb_height + 10
-        play_again_y = view_lb_y + 55
+        # Dynamic rects based on leaderboard length (max 5 shown on game over screen)
+        lb_count = min(len(self.leaderboard), 5)
+        lb_height = max(lb_count, 1) * 34
+        view_lb_y = 252 + lb_height + 12
+        play_again_y = view_lb_y + 54
 
         self.view_lb_btn_rect    = pygame.Rect(cx - 120, view_lb_y, 240, 44)
         self.reload_button_rect  = pygame.Rect(cx - 100, play_again_y, 200, 50)
@@ -1037,7 +1039,7 @@ class GameManager:
         if self.leaderboard:
             rank_colors = {1: GOLD, 2: (210, 210, 210), 3: (205, 130, 55)}
             for i, entry in enumerate(self.leaderboard[:5], start=1):
-                display_name = "".join(c for c in entry["username"] if c.isprintable() and ord(c) >= 32).strip() or "Guest"
+                display_name = clean_username(entry["username"])
                 is_me = entry["username"] == self.player_name
                 row_col = ACCENT if is_me else (200, 200, 215)
                 rk_col  = rank_colors.get(i, row_col)
