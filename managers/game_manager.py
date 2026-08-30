@@ -182,6 +182,14 @@ def clean_username(username):
     return cleaned.strip() or "Guest"
 
 
+def render_retro_score(score_val, color, scale=3):
+    """Render score as pixelated 8-bit retro font by drawing at small size and scaling up."""
+    small_font = pygame.font.SysFont("Consolas", 14, bold=True)
+    temp = small_font.render(str(score_val), False, color)
+    w, h = temp.get_size()
+    return pygame.transform.scale(temp, (int(w * scale), int(h * scale)))
+
+
 class GameManager:
     def __init__(self, screen, screen_width, screen_height, player_name=""):
         self.screen = screen
@@ -782,9 +790,9 @@ class GameManager:
         pygame.draw.rect(self.screen, (150, 115, 20), pb_rect, 2, border_radius=12)
 
         pb_lbl = self.tiny_font.render("BEST SCORE", True, (180, 150, 80))
-        pb_val = self.font.render(str(self.personal_best), True, GOLD)
+        pb_val = render_retro_score(self.personal_best, GOLD, scale=1.8)
         self.screen.blit(pb_lbl, (pb_rect.centerx - pb_lbl.get_width() // 2, pb_rect.y + 8))
-        self.screen.blit(pb_val, (pb_rect.centerx - pb_val.get_width() // 2, pb_rect.y + 28))
+        self.screen.blit(pb_val, (pb_rect.centerx - pb_val.get_width() // 2, pb_rect.y + 26))
 
         # Display name field
         dn_lbl = self.tiny_font.render("DISPLAY NAME", True, (80, 90, 140))
@@ -944,23 +952,25 @@ class GameManager:
             self.bullet.draw(self.screen)
         self.buttons.draw(self.screen)
 
-        # HUD — score chip
-        score_bg = pygame.Rect(10, 10, 150, 50)
+        # HUD — score chip (compact layout)
+        score_bg = pygame.Rect(10, 10, 150, 38)
         pygame.draw.rect(self.screen, (14, 16, 36), score_bg, border_radius=8)
         pygame.draw.rect(self.screen, (40, 44, 80), score_bg, 1, border_radius=8)
         score_lbl = self.tiny_font.render("SCORE", True, (80, 90, 140))
-        score_val = self.font.render(str(self.score), True, WHITE)
-        self.screen.blit(score_lbl, (20, 13))
-        self.screen.blit(score_val, (20, 30))
-
-        # HUD — best chip
-        pb_bg = pygame.Rect(10, 66, 150, 40)
+        self.screen.blit(score_lbl, (20, 20))
+        
+        score_val = render_retro_score(self.score, WHITE, scale=1.8)
+        self.screen.blit(score_val, (84, 17))
+ 
+        # HUD — best chip (compact layout)
+        pb_bg = pygame.Rect(10, 54, 150, 38)
         pygame.draw.rect(self.screen, (14, 16, 36), pb_bg, border_radius=8)
         pygame.draw.rect(self.screen, (40, 44, 80), pb_bg, 1, border_radius=8)
         pb_lbl = self.tiny_font.render("BEST", True, (100, 80, 10))
-        pb_val = self.small_font.render(str(self.personal_best), True, GOLD)
-        self.screen.blit(pb_lbl, (20, 68))
-        self.screen.blit(pb_val, (20, 83))
+        self.screen.blit(pb_lbl, (20, 64))
+        
+        pb_val = render_retro_score(self.personal_best, GOLD, scale=1.8)
+        self.screen.blit(pb_val, (84, 61))
 
         # HUD — right side hints
         ctrl_hint = "← → Move  |  SPACE Shoot" if self.profile_control == "arrows" else "A D Move  |  SPACE Shoot"
@@ -981,7 +991,7 @@ class GameManager:
         # Dynamic rects based on leaderboard length (max 5 shown on game over screen)
         lb_count = min(len(self.leaderboard), 5)
         lb_height = max(lb_count, 1) * 34
-        view_lb_y = 252 + lb_height + 12
+        view_lb_y = 274 + lb_height + 12
         play_again_y = view_lb_y + 54
 
         self.view_lb_btn_rect    = pygame.Rect(cx - 120, view_lb_y, 240, 44)
@@ -1014,21 +1024,22 @@ class GameManager:
         draw_stars(self.screen, self.stars)
 
         # Title
-        go_surf = self.big_font.render("GAME OVER", True, (220, 40, 40))
-        draw_glow_title(self.screen, self.big_font, "GAME OVER", cx, 28, color=(220, 40, 40))
+        draw_glow_title(self.screen, self.big_font, "GAME OVER", cx, 24, color=(220, 40, 40))
 
-        # Score card
-        score_card = pygame.Rect(cx - 160, 102, 320, 72)
-        pygame.draw.rect(self.screen, PANEL_BG, score_card, border_radius=12)
-        pygame.draw.rect(self.screen, PANEL_BOR, score_card, 2, border_radius=12)
+        # Score card (made taller to prevent score text overflow/overlap)
+        score_card = pygame.Rect(cx - 160, 96, 320, 96)
+        pygame.draw.rect(self.screen, PANEL_BG, score_card, border_radius=16)
+        pygame.draw.rect(self.screen, PANEL_BOR, score_card, 2, border_radius=16)
 
         sc_lbl  = self.tiny_font.render("FINAL SCORE", True, (80, 90, 140))
-        sc_val  = self.big_font.render(str(self.score), True, WHITE)
-        self.screen.blit(sc_lbl, (cx - sc_lbl.get_width() // 2, 108))
-        self.screen.blit(sc_val, (cx - sc_val.get_width() // 2, 124))
+        self.screen.blit(sc_lbl, (cx - sc_lbl.get_width() // 2, 106))
+        
+        # Retro pixelated score value
+        sc_val = render_retro_score(self.score, WHITE, scale=3.6)
+        self.screen.blit(sc_val, (cx - sc_val.get_width() // 2, 130))
 
-        # New best badge
-        new_best_y = 182
+        # New best badge (pushed down slightly to keep clean margins)
+        new_best_y = 202
         if self.score >= self.personal_best and self.score > 0:
             nb_bg = pygame.Rect(cx - 120, new_best_y - 2, 240, 28)
             pygame.draw.rect(self.screen, (35, 28, 0), nb_bg, border_radius=8)
@@ -1036,12 +1047,12 @@ class GameManager:
             nb_surf = self.small_font.render(" New Personal Best!", True, GOLD)
             self.screen.blit(nb_surf, (cx - nb_surf.get_width() // 2, new_best_y))
 
-        # Leaderboard mini-table
+        # Leaderboard mini-table (repositioned to account for taller score card)
         lb_title = self.small_font.render("TOP SCORES", True, (120, 100, 20))
-        self.screen.blit(lb_title, (cx - lb_title.get_width() // 2, 220))
-        draw_divider(self.screen, cx, 244, width=360, color=(60, 50, 0))
+        self.screen.blit(lb_title, (cx - lb_title.get_width() // 2, 242))
+        draw_divider(self.screen, cx, 266, width=360, color=(60, 50, 0))
 
-        y_offset = 252
+        y_offset = 274
         if self.leaderboard:
             rank_colors = {1: GOLD, 2: (210, 210, 210), 3: (205, 130, 55)}
             for i, entry in enumerate(self.leaderboard[:5], start=1):

@@ -237,10 +237,11 @@ class DBManager:
         try:
             cursor = self.connection.cursor(dictionary=True)
             query = """
-                SELECT p.username, s.score, s.achieved_at 
+                SELECT p.username, MAX(s.score) AS score, MAX(s.achieved_at) AS achieved_at 
                 FROM scores s
                 JOIN players p ON s.player_id = p.id
-                ORDER BY s.score DESC
+                GROUP BY p.id, p.username
+                ORDER BY score DESC
                 LIMIT %s
             """
             cursor.execute(query, (limit,))
