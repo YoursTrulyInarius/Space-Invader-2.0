@@ -762,23 +762,29 @@ class GameManager:
         # Divider
         draw_divider(self.screen, cx, 126, width=280, color=(0, 120, 55))
 
-        # Player info card
-        card = pygame.Rect(cx - 210, 142, 420, 90)
-        pygame.draw.rect(self.screen, PANEL_BG, card, border_radius=12)
-        pygame.draw.rect(self.screen, PANEL_BOR, card, 2, border_radius=12)
+        # Player info card (futuristic dashboard style)
+        card = pygame.Rect(cx - 210, 142, 420, 96)
+        pygame.draw.rect(self.screen, PANEL_BG, card, border_radius=16)
+        pygame.draw.rect(self.screen, PANEL_BOR, card, 2, border_radius=16)
 
-        logged_lbl = self.tiny_font.render("LOGGED IN AS", True, (80, 90, 140))
-        self.screen.blit(logged_lbl, (cx - logged_lbl.get_width() // 2, 152))
+        # Left Column: Pilot Username
+        pilot_lbl = self.tiny_font.render("PILOT", True, (80, 90, 140))
+        pilot_val = self.font.render(self.player_name, True, ACCENT)
+        self.screen.blit(pilot_lbl, (cx - 180, card.y + 22))
+        self.screen.blit(pilot_val, (cx - 180, card.y + 44))
 
-        name_disp = self.font.render(self.player_name, True, ACCENT)
-        self.screen.blit(name_disp, (cx - name_disp.get_width() // 2, 172))
+        # Vertical Divider
+        pygame.draw.line(self.screen, (40, 44, 80), (cx, card.y + 16), (cx, card.bottom - 16), 1)
 
-        pb_lbl  = self.tiny_font.render("PERSONAL BEST", True, (80, 90, 140))
-        pb_val  = self.font.render(str(self.personal_best), True, GOLD)
-        pb_total_w = pb_lbl.get_width() + 12 + pb_val.get_width()
-        lx = cx - pb_total_w // 2
-        self.screen.blit(pb_lbl, (lx, 200))
-        self.screen.blit(pb_val, (lx + pb_lbl.get_width() + 8, 197))
+        # Right Column: Golden High Score Pill Badge
+        pb_rect = pygame.Rect(cx + 20, card.y + 18, 160, 60)
+        pygame.draw.rect(self.screen, (32, 26, 8), pb_rect, border_radius=12)
+        pygame.draw.rect(self.screen, (150, 115, 20), pb_rect, 2, border_radius=12)
+
+        pb_lbl = self.tiny_font.render("BEST SCORE", True, (180, 150, 80))
+        pb_val = self.font.render(str(self.personal_best), True, GOLD)
+        self.screen.blit(pb_lbl, (pb_rect.centerx - pb_lbl.get_width() // 2, pb_rect.y + 8))
+        self.screen.blit(pb_val, (pb_rect.centerx - pb_val.get_width() // 2, pb_rect.y + 28))
 
         # Display name field
         dn_lbl = self.tiny_font.render("DISPLAY NAME", True, (80, 90, 140))
