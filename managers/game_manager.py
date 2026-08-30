@@ -223,7 +223,7 @@ class GameManager:
         self.reg_back_rect    = pygame.Rect(cx + field_w // 2 - 158, 434, 158, 52)
 
         # --- Leaderboard screen rect ---
-        self.lb_back_rect = pygame.Rect(cx - 100, screen_height - 68, 200, 46)
+        self.lb_back_rect = pygame.Rect(cx - 100, 528, 200, 46)
 
         # --- Auth state ---
         self.login_username  = ""
@@ -608,35 +608,45 @@ class GameManager:
         self._draw_leaderboard()
 
     def _draw_leaderboard(self):
+        def clean_username(username):
+            if not username:
+                return "Guest"
+            cleaned = "".join(c for c in username if c.isprintable() and ord(c) >= 32)
+            return cleaned.strip() or "Guest"
+
         self.screen.fill(DARK_BG)
         draw_stars(self.screen, self.stars)
 
         cx = self.screen_width // 2
 
-        # Title with gold glow
-        draw_glow_title(self.screen, self.big_font, "  Leaderboard", cx, 22, color=GOLD)
+        # Title with gold glow (properly centered)
+        draw_glow_title(self.screen, self.big_font, "Leaderboard", cx, 18, color=GOLD)
 
         sub = self.small_font.render("Top 10 All-Time Scores", True, GRAY)
-        self.screen.blit(sub, (cx - sub.get_width() // 2, 96))
+        self.screen.blit(sub, (cx - sub.get_width() // 2, 90))
 
-        draw_divider(self.screen, cx, 126, width=320, color=(90, 70, 0))
+        draw_divider(self.screen, cx, 118, width=320, color=(90, 70, 0))
 
         # Table panel
-        table_rect = pygame.Rect(cx - 285, 134, 570, 390)
+        table_rect = pygame.Rect(cx - 285, 126, 570, 384)
         pygame.draw.rect(self.screen, PANEL_BG, table_rect, border_radius=14)
         pygame.draw.rect(self.screen, PANEL_BOR, table_rect, 2, border_radius=14)
 
         # Header row
-        header_y = 150
+        header_y = 138
         rank_x  = cx - 258
         name_x  = cx - 190
-        score_x = cx + 95
+        score_center_x = cx + 125
         date_x  = cx + 172
 
-        headers = [("#", rank_x), ("PLAYER", name_x), ("SCORE", score_x), ("DATE", date_x)]
+        # Renders header columns
+        headers = [("#", rank_x), ("PLAYER", name_x), ("DATE", date_x)]
         for h_text, h_x in headers:
             h_surf = self.tiny_font.render(h_text, True, (140, 120, 40))
             self.screen.blit(h_surf, (h_x, header_y))
+
+        score_lbl_surf = self.tiny_font.render("SCORE", True, (140, 120, 40))
+        self.screen.blit(score_lbl_surf, (score_center_x - score_lbl_surf.get_width() // 2, header_y))
 
         # Header divider
         pygame.draw.line(self.screen, (45, 48, 82),
@@ -647,10 +657,11 @@ class GameManager:
             no_data = self.font.render("No scores yet — be the first!", True, GRAY)
             self.screen.blit(no_data, (cx - no_data.get_width() // 2, 285))
         else:
-            row_y = header_y + 34
+            row_y = header_y + 32
             rank_colors = {1: GOLD, 2: (210, 210, 210), 3: (205, 130, 55)}
             medals      = {1: "1", 2: "2", 3: "3"}
             for i, entry in enumerate(self.leaderboard, start=1):
+                display_name = clean_username(entry["username"])
                 is_me     = (entry["username"] == self.player_name)
                 row_color = ACCENT if is_me else (220, 220, 230)
 
@@ -674,7 +685,7 @@ class GameManager:
                 rank_color = rank_colors.get(i, (100, 100, 120))
                 rank_label = medals.get(i, str(i))
                 rank_surf  = self.small_font.render(rank_label, True, rank_color)
-                name_surf  = self.small_font.render(entry["username"][:18], True, row_color)
+                name_surf  = self.small_font.render(display_name[:18], True, row_color)
                 score_surf = self.font.render(str(entry["score"]), True, row_color)
 
                 achieved = entry.get("achieved_at")
@@ -683,9 +694,9 @@ class GameManager:
 
                 self.screen.blit(rank_surf,  (rank_x,  row_y))
                 self.screen.blit(name_surf,  (name_x,  row_y))
-                self.screen.blit(score_surf, (score_x, row_y - 2))
+                self.screen.blit(score_surf, (score_center_x - score_surf.get_width() // 2, row_y - 2))
                 self.screen.blit(date_surf,  (date_x,  row_y + 6))
-                row_y += 36
+                row_y += 34
 
         # Back button
         draw_button(self.screen, self.font, self.lb_back_rect, "< BACK", primary=False)
@@ -1026,6 +1037,7 @@ class GameManager:
         if self.leaderboard:
             rank_colors = {1: GOLD, 2: (210, 210, 210), 3: (205, 130, 55)}
             for i, entry in enumerate(self.leaderboard[:5], start=1):
+                display_name = "".join(c for c in entry["username"] if c.isprintable() and ord(c) >= 32).strip() or "Guest"
                 is_me = entry["username"] == self.player_name
                 row_col = ACCENT if is_me else (200, 200, 215)
                 rk_col  = rank_colors.get(i, row_col)
@@ -1037,7 +1049,7 @@ class GameManager:
                     self.screen.blit(hs, hi.topleft)
 
                 rk_surf  = self.small_font.render(str(i), True, rk_col)
-                nm_surf  = self.small_font.render(entry["username"][:16], True, row_col)
+                nm_surf  = self.small_font.render(display_name[:16], True, row_col)
                 sc_surf2 = self.font.render(str(entry["score"]), True, row_col)
                 self.screen.blit(rk_surf,  (cx - 185, y_offset))
                 self.screen.blit(nm_surf,  (cx - 155, y_offset))
