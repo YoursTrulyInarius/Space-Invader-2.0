@@ -1,5 +1,11 @@
 import mysql.connector
 from mysql.connector import Error
+import hashlib
+
+def hash_password(password: str) -> str:
+    """Return the SHA-256 hex-digest of the given password."""
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
 
 class DBManager:
     def __init__(self, host="localhost", user="root", password="", database="space_invader_db"):
@@ -9,6 +15,9 @@ class DBManager:
         self.database = database
         self.connection = None
 
+    # ------------------------------------------------------------------
+    # Connection helpers
+    # ------------------------------------------------------------------
     def connect(self):
         try:
             self.connection = mysql.connector.connect(
@@ -28,6 +37,70 @@ class DBManager:
         if self.connection and self.connection.is_connected():
             self.connection.close()
 
+    # ------------------------------------------------------------------
+    # Auth: register / login
+    # ------------------------------------------------------------------
+    def register_player(self, username: str, password: str):
+        """
+        Create a new player with a hashed password.
+        Returns (True, player_id) on success, (False, error_message) on failure.
+        """
+        if not username or len(username) < 3:
+            return False, "Username must be at least 3 characters."
+        if not password or len(password) < 4:
+            return False, "Password must be at least 4 characters."
+
+        if not self.connect():
+            return False, "Cannot connect to the database."
+
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+
+            # Check uniqueness
+            cursor.execute("SELECT id FROM players WHERE username = %s", (username,))
+            if cursor.fetchone():
+                return False, f"Username '{username}' is already taken."
+
+            pw_hash = hash_password(password)
+            cursor.execute(
+                "INSERT INTO players (username, password_hash) VALUES (%s, %s)",
+                (username, pw_hash)
+            )
+            self.connection.commit()
+            return True, cursor.lastrowid
+
+        except Error as e:
+            print(f"Error registering player: {e}")
+            return False, "Database error during registration."
+        finally:
+            self.close()
+
+    def login_player(self, username: str, password: str):
+        """
+        Validate credentials.
+        Returns the player row (dict) on success, or None on failure.
+        """
+        if not self.connect():
+            return None
+
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            pw_hash = hash_password(password)
+            cursor.execute(
+                "SELECT * FROM players WHERE username = %s AND password_hash = %s",
+                (username, pw_hash)
+            )
+            return cursor.fetchone()  # None if no match
+
+        except Error as e:
+            print(f"Error during login: {e}")
+            return None
+        finally:
+            self.close()
+
+    # ------------------------------------------------------------------
+    # Player CRUD
+    # ------------------------------------------------------------------
     def get_or_create_player(self, username):
         if not self.connect():
             return None
@@ -42,7 +115,7 @@ class DBManager:
             if player:
                 return player['id']
             
-            # Create player if not exists
+            # Create player if not exists (legacy / guest path, no password)
             cursor.execute("INSERT INTO players (username) VALUES (%s)", (username,))
             self.connection.commit()
             return cursor.lastrowid
@@ -50,46 +123,6 @@ class DBManager:
         except Error as e:
             print(f"Error getting/creating player: {e}")
             return None
-        finally:
-            self.close()
-
-    def save_score(self, username, score):
-        player_id = self.get_or_create_player(username)
-        if not player_id:
-            return False
-
-        if not self.connect():
-            return False
-
-        try:
-            cursor = self.connection.cursor()
-            cursor.execute("INSERT INTO scores (player_id, score) VALUES (%s, %s)", (player_id, score))
-            self.connection.commit()
-            return True
-        except Error as e:
-            print(f"Error saving score: {e}")
-            return False
-        finally:
-            self.close()
-
-    def get_top_scores(self, limit=5):
-        if not self.connect():
-            return []
-
-        try:
-            cursor = self.connection.cursor(dictionary=True)
-            query = """
-                SELECT p.username, s.score, s.achieved_at 
-                FROM scores s
-                JOIN players p ON s.player_id = p.id
-                ORDER BY s.score DESC
-                LIMIT %s
-            """
-            cursor.execute(query, (limit,))
-            return cursor.fetchall()
-        except Error as e:
-            print(f"Error retrieving top scores: {e}")
-            return []
         finally:
             self.close()
 
@@ -175,22 +208,118 @@ class DBManager:
         finally:
             self.close()
 
+    # ------------------------------------------------------------------
+    # Scores
+    # ------------------------------------------------------------------
+    def save_score(self, username, score):
+        player_id = self.get_or_create_player(username)
+        if not player_id:
+            return False
+
+        if not self.connect():
+            return False
+
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT INTO scores (player_id, score) VALUES (%s, %s)", (player_id, score))
+            self.connection.commit()
+            return True
+        except Error as e:
+            print(f"Error saving score: {e}")
+            return False
+        finally:
+            self.close()
+
+    def get_top_scores(self, limit=10):
+        if not self.connect():
+            return []
+
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            query = """
+                SELECT p.username, s.score, s.achieved_at 
+                FROM scores s
+                JOIN players p ON s.player_id = p.id
+                ORDER BY s.score DESC
+                LIMIT %s
+            """
+            cursor.execute(query, (limit,))
+            return cursor.fetchall()
+        except Error as e:
+            print(f"Error retrieving top scores: {e}")
+            return []
+        finally:
+            self.close()
+
+    def get_player_best_score(self, username):
+        """Return the highest score ever achieved by a given player, or 0."""
+        if not self.connect():
+            return 0
+
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            query = """
+                SELECT MAX(s.score) AS best
+                FROM scores s
+                JOIN players p ON s.player_id = p.id
+                WHERE p.username = %s
+            """
+            cursor.execute(query, (username,))
+            row = cursor.fetchone()
+            return row["best"] if row and row["best"] is not None else 0
+        except Error as e:
+            print(f"Error retrieving best score: {e}")
+            return 0
+        finally:
+            self.close()
+
+
 if __name__ == "__main__":
     def run_tests():
         print("Testing DB CRUD operations...")
         db = DBManager(user="root", password="")
         
+        # 0. Register
+        print("0. Registering 'test_user_123' with password 'pass1234'...")
+        ok, result = db.register_player("test_user_123", "pass1234")
+        print(f"   -> Success: {ok}, result: {result}")
+        assert ok, f"Registration failed: {result}"
+
+        # 0b. Duplicate register
+        print("0b. Trying duplicate registration...")
+        ok2, msg2 = db.register_player("test_user_123", "pass1234")
+        print(f"   -> Expected failure: {not ok2}, msg: {msg2}")
+        assert not ok2, "Duplicate should fail"
+
+        # 0c. Login — correct
+        print("0c. Logging in with correct credentials...")
+        player_row = db.login_player("test_user_123", "pass1234")
+        print(f"   -> Player row: {player_row}")
+        assert player_row is not None, "Login failed"
+
+        # 0d. Login — wrong password
+        print("0d. Logging in with wrong password...")
+        bad_row = db.login_player("test_user_123", "wrongpass")
+        print(f"   -> Expected None: {bad_row}")
+        assert bad_row is None, "Wrong password should fail"
+
         # 1. Create / Read (get_or_create_player)
-        print("1. Creating test player 'test_user_123'...")
+        print("1. get_or_create_player for existing player...")
         player_id = db.get_or_create_player("test_user_123")
         print(f"   -> Player ID: {player_id}")
-        assert player_id is not None, "Failed to create player"
+        assert player_id is not None, "Failed to get player"
 
         # 2. Create Score
         print("2. Saving score (100) for 'test_user_123'...")
         success = db.save_score("test_user_123", 100)
         print(f"   -> Success: {success}")
         assert success, "Failed to save score"
+
+        # 2b. Best score
+        print("2b. Getting best score for 'test_user_123'...")
+        best = db.get_player_best_score("test_user_123")
+        print(f"   -> Best: {best}")
+        assert best == 100, f"Best score mismatch: {best}"
 
         # 3. Read Leaderboard
         print("3. Reading top scores...")

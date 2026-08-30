@@ -29,6 +29,7 @@ def setup_database():
                 CREATE TABLE IF NOT EXISTS players (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     username VARCHAR(50) UNIQUE NOT NULL,
+                    password_hash VARCHAR(64) DEFAULT NULL,
                     ship_color VARCHAR(20) DEFAULT 'green',
                     player_title VARCHAR(50) DEFAULT 'Space Cadet',
                     control_scheme VARCHAR(10) DEFAULT 'arrows',
@@ -39,6 +40,7 @@ def setup_database():
 
             print("Updating 'players' table schema if needed (adding new columns)...")
             alter_queries = [
+                "ALTER TABLE players ADD COLUMN password_hash VARCHAR(64) DEFAULT NULL",
                 "ALTER TABLE players ADD COLUMN ship_color VARCHAR(20) DEFAULT 'green'",
                 "ALTER TABLE players ADD COLUMN player_title VARCHAR(50) DEFAULT 'Space Cadet'",
                 "ALTER TABLE players ADD COLUMN control_scheme VARCHAR(10) DEFAULT 'arrows'",
@@ -47,10 +49,9 @@ def setup_database():
             for query in alter_queries:
                 try:
                     cursor.execute(query)
-                except Error as e:
+                except Error:
                     # Ignore duplicate column errors (Error 1060: Duplicate column name)
                     pass
-
 
             print("Creating 'scores' table...")
             cursor.execute("""
