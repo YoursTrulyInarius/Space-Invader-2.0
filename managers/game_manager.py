@@ -22,19 +22,40 @@ DIFFICULTY_LABELS = {"easy": "Easy", "normal": "Normal", "hard": "Hard"}
 # Difficulty multipliers (enemy spawn count modifier)
 DIFFICULTY_SPAWN = {"easy": 3, "normal": 5, "hard": 8}
 
-DARK_BG   = (6,  6,  18)
-ACCENT    = (0,  220, 100)
-WHITE     = (255, 255, 255)
-GRAY      = (140, 140, 155)
-DARK_BTN  = (25, 28, 52)
-SEL_BTN   = (0,  160, 72)
-SEL_BTN_H = (0,  200, 90)          # lighter shade for top of button
-RED_ERR   = (255, 80,  80)
-GOLD      = (255, 215, 0)
-PANEL_BG  = (12, 14, 32)
-PANEL_BOR = (38, 42, 78)
-FIELD_BG  = (18, 20, 42)
-ACCENT_DIM = (0, 120, 55)          # subtle glow colour
+# Original visual identity: "editorial noir" with charcoal, ivory, and plum accents.
+DARK_BG   = (12, 12, 16)
+ACCENT    = (205, 138, 186)
+ACCENT_2  = (148, 202, 187)
+WHITE     = (241, 236, 228)
+GRAY      = (168, 164, 156)
+DARK_BTN  = (30, 29, 35)
+SEL_BTN   = (118, 86, 120)
+SEL_BTN_H = (219, 178, 205)
+RED_ERR   = (230, 118, 118)
+GOLD      = (212, 182, 104)
+PANEL_BG  = (21, 21, 26)
+PANEL_BOR = (143, 133, 146)
+FIELD_BG  = (15, 15, 20)
+ACCENT_DIM = (72, 53, 76)
+
+
+def draw_panel(screen, rect, fill_color=PANEL_BG, border_color=PANEL_BOR, radius=18):
+    """Draw a refined editorial panel with soft depth and a structured frame."""
+    shadow = pygame.Rect(rect.x + 7, rect.y + 9, rect.width, rect.height)
+    shadow_surface = pygame.Surface((shadow.width, shadow.height), pygame.SRCALPHA)
+    pygame.draw.rect(shadow_surface, (0, 0, 0, 95), shadow_surface.get_rect(), border_radius=radius)
+    screen.blit(shadow_surface, shadow.topleft)
+
+    pygame.draw.rect(screen, fill_color, rect, border_radius=radius)
+    pygame.draw.rect(screen, border_color, rect, 2, border_radius=radius)
+
+    top_line = pygame.Rect(rect.x + 16, rect.y + 14, rect.width - 32, 3)
+    pygame.draw.rect(screen, ACCENT, top_line, border_radius=2)
+
+    inner = pygame.Rect(rect.x + 10, rect.y + 10, rect.width - 20, rect.height - 20)
+    inner_surface = pygame.Surface((inner.width, inner.height), pygame.SRCALPHA)
+    pygame.draw.rect(inner_surface, (255, 255, 255, 14), inner_surface.get_rect(), border_radius=radius - 6)
+    screen.blit(inner_surface, inner.topleft)
 
 
 def draw_option_row(screen, font, label, options, selected, y, x_start, item_w=120, item_h=40):
@@ -46,14 +67,16 @@ def draw_option_row(screen, font, label, options, selected, y, x_start, item_w=1
     btn_x = x_start + 180
     for opt in options:
         rect = pygame.Rect(btn_x, y, item_w, item_h)
-        color = SEL_BTN if opt == selected else DARK_BTN
-        pygame.draw.rect(screen, color, rect, border_radius=8)
-        pygame.draw.rect(screen, ACCENT if opt == selected else GRAY, rect, 2, border_radius=8)
+        is_selected = opt == selected
+        color = SEL_BTN if is_selected else DARK_BTN
+        base_border = ACCENT_2 if is_selected else (117, 95, 86)
+        pygame.draw.rect(screen, color, rect, border_radius=10)
+        pygame.draw.rect(screen, base_border, rect, 2, border_radius=10)
 
         if label == "Ship Color:":
             pygame.draw.circle(screen, SHIP_COLOR_RGB.get(opt, WHITE),
                                (btn_x + item_w // 2, y + item_h // 2), 12)
-            pygame.draw.circle(screen, WHITE if opt == selected else GRAY,
+            pygame.draw.circle(screen, WHITE if is_selected else GRAY,
                                (btn_x + item_w // 2, y + item_h // 2), 12, 2)
         else:
             disp = opt.upper() if label == "Controls:" else DIFFICULTY_LABELS.get(opt, opt.capitalize())
@@ -70,7 +93,7 @@ def draw_glow_rect(screen, rect, color, radius=10, layers=3):
     """Draw a soft rectangular glow around a rect."""
     for i in range(layers, 0, -1):
         expand = i * 3
-        alpha  = 40 // i
+        alpha = 42 // i
         glow_rect = rect.inflate(expand * 2, expand * 2)
         s = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
         pygame.draw.rect(s, (*color, alpha), s.get_rect(), border_radius=radius + expand)
@@ -79,32 +102,29 @@ def draw_glow_rect(screen, rect, color, radius=10, layers=3):
 
 def draw_text_field(screen, font, rect, text, placeholder, focused, masked=False, label=None, label_font=None):
     """Draw a styled input field with optional floating label above it."""
-    border_color = ACCENT if focused else (55, 60, 95)
-    bg_color     = (22, 26, 52) if focused else FIELD_BG
+    border_color = ACCENT if focused else (88, 82, 93)
+    bg_color = (20, 20, 26) if focused else FIELD_BG
 
-    # Glow on focus
     if focused:
-        draw_glow_rect(screen, rect, ACCENT, radius=10, layers=2)
+        draw_glow_rect(screen, rect, ACCENT, radius=12, layers=2)
 
-    pygame.draw.rect(screen, bg_color,     rect, border_radius=10)
-    pygame.draw.rect(screen, border_color, rect, 2, border_radius=10)
+    pygame.draw.rect(screen, bg_color, rect, border_radius=12)
+    pygame.draw.rect(screen, border_color, rect, 2, border_radius=12)
 
     display = ("●" * len(text)) if masked else text
     if display:
         surf = font.render(display, True, WHITE)
     else:
-        surf = font.render(placeholder, True, (70, 75, 105))
+        surf = font.render(placeholder, True, (149, 146, 152))
 
     screen.blit(surf, (rect.x + 14, rect.y + (rect.height - surf.get_height()) // 2))
 
-    # Blinking cursor when focused
     if focused and (pygame.time.get_ticks() // 530) % 2 == 0:
         cx_pos = rect.x + 14 + (surf.get_width() if display else 0) + 2
         pygame.draw.line(screen, ACCENT,
                          (cx_pos, rect.y + 10),
                          (cx_pos, rect.bottom - 10), 2)
 
-    # Floating label badge above the field
     if label and label_font and focused:
         lbl_surf = label_font.render(label, True, ACCENT)
         lx = rect.x + 10
@@ -113,41 +133,38 @@ def draw_text_field(screen, font, rect, text, placeholder, focused, masked=False
 
 
 def draw_button(screen, font, rect, text, primary=True):
-    """Draw a polished gradient-style button."""
+    """Draw a polished editorial button with a softer luxury finish."""
     if primary:
-        # Two-tone fill: lighter top half, darker bottom
         top_rect = pygame.Rect(rect.x, rect.y, rect.width, rect.height // 2)
-        bot_rect = pygame.Rect(rect.x, rect.y + rect.height // 2, rect.width, rect.height - rect.height // 2)
-        pygame.draw.rect(screen, SEL_BTN_H, rect,     border_radius=10)
-        pygame.draw.rect(screen, SEL_BTN,   bot_rect, border_radius=0)
-        pygame.draw.rect(screen, SEL_BTN,   rect,     border_radius=10)   # re-clip corners
-        pygame.draw.rect(screen, (0, 255, 120), rect, 2, border_radius=10)
+        bottom_rect = pygame.Rect(rect.x, rect.y + rect.height // 2, rect.width, rect.height - rect.height // 2)
+        pygame.draw.rect(screen, SEL_BTN_H, top_rect, border_radius=12)
+        pygame.draw.rect(screen, SEL_BTN, bottom_rect, border_radius=0)
+        pygame.draw.rect(screen, SEL_BTN, rect, border_radius=12)
+        pygame.draw.rect(screen, (255, 255, 255), rect, 2, border_radius=12)
     else:
-        pygame.draw.rect(screen, DARK_BTN, rect, border_radius=10)
-        pygame.draw.rect(screen, (55, 60, 95), rect, 2, border_radius=10)
+        pygame.draw.rect(screen, DARK_BTN, rect, border_radius=12)
+        pygame.draw.rect(screen, (126, 118, 130), rect, 2, border_radius=12)
 
     txt_surf = font.render(text, True, WHITE)
-    screen.blit(txt_surf, (rect.centerx - txt_surf.get_width()  // 2,
+    screen.blit(txt_surf, (rect.centerx - txt_surf.get_width() // 2,
                             rect.centery - txt_surf.get_height() // 2))
 
 
 def draw_divider(screen, cx, y, width=340, color=None):
     """Draw a horizontal decorative divider."""
     if color is None:
-        color = (40, 44, 80)
-    pygame.draw.line(screen, color, (cx - width // 2, y), (cx + width // 2, y), 1)
+        color = ACCENT_2
+    pygame.draw.line(screen, color, (cx - width // 2, y), (cx + width // 2, y), 2)
 
 
-def draw_glow_title(screen, big_font, text, cx, y, color=ACCENT):
+def draw_glow_title(screen, big_font, text, cx, y, color=ACCENT_2):
     """Draw title text with a soft colour glow underneath."""
-    # Glow layer (slightly offset, low alpha)
-    glow = big_font.render(text, True, (*color, 60))
+    glow = big_font.render(text, True, (*color, 80))
     for dx, dy in [(-2, 2), (2, 2), (0, 3)]:
         gs = pygame.Surface(glow.get_size(), pygame.SRCALPHA)
         gs.blit(glow, (0, 0))
-        gs.set_alpha(40)
+        gs.set_alpha(45)
         screen.blit(gs, (cx - glow.get_width() // 2 + dx, y + dy))
-    # Main title
     surf = big_font.render(text, True, color)
     screen.blit(surf, (cx - surf.get_width() // 2, y))
 
@@ -156,9 +173,8 @@ def draw_stars(screen, stars):
     """Draw a simple star-field background."""
     t = pygame.time.get_ticks()
     for i, (x, y, r, brightness) in enumerate(stars):
-        # Subtle twinkle: offset brightness by a sine-like pattern
         flicker = int(brightness + 30 * ((t // 800 + i * 37) % 3 - 1) * 0.3)
-        flicker = max(40, min(220, flicker))
+        flicker = max(60, min(220, flicker))
         pygame.draw.circle(screen, (flicker, flicker, flicker), (x, y), r)
 
 
@@ -190,6 +206,25 @@ def render_retro_score(score_val, color, scale=3):
     return pygame.transform.scale(temp, (int(w * scale), int(h * scale)))
 
 
+def draw_heart(screen, x, y, color, size=14):
+    """Draw a cleaner heart icon for the HUD."""
+    surface = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+    cx = size
+    cy = size
+
+    pygame.draw.circle(surface, color, (cx - size // 2, cy - size // 3), size // 2)
+    pygame.draw.circle(surface, color, (cx + size // 2, cy - size // 3), size // 2)
+    pygame.draw.polygon(surface, color, [
+        (cx, cy + size // 2),
+        (cx - size, cy - size // 4),
+        (cx - size // 2, cy - size),
+        (cx, cy - size // 2),
+        (cx + size // 2, cy - size),
+        (cx + size, cy - size // 4),
+    ])
+    screen.blit(surface, (x, y))
+
+
 class GameManager:
     def __init__(self, screen, screen_width, screen_height, player_name=""):
         self.screen = screen
@@ -200,10 +235,10 @@ class GameManager:
         self.leaderboard = []
         self.stars = generate_stars(screen_width, screen_height)
 
-        self.font       = pygame.font.SysFont("Arial", 28)
-        self.big_font   = pygame.font.SysFont("Arial", 64)
-        self.small_font = pygame.font.SysFont("Arial", 22)
-        self.tiny_font  = pygame.font.SysFont("Arial", 18)
+        self.font       = pygame.font.SysFont("Georgia", 28, bold=True)
+        self.big_font   = pygame.font.SysFont("Georgia", 68, bold=True)
+        self.small_font = pygame.font.SysFont("Trebuchet MS", 22, bold=True)
+        self.tiny_font  = pygame.font.SysFont("Trebuchet MS", 18, bold=True)
 
         # --- Layout constants ---
         cx = screen_width // 2
@@ -224,19 +259,19 @@ class GameManager:
         self.profile_option_rects = []
 
         # --- Login screen rects ---
-        field_w = 340
-        self.login_user_rect    = pygame.Rect(cx - field_w // 2, 212, field_w, 52)
-        self.login_pass_rect    = pygame.Rect(cx - field_w // 2, 294, field_w, 52)
-        self.login_btn_rect     = pygame.Rect(cx - field_w // 2, 380, 158, 52)
-        self.login_reg_btn_rect = pygame.Rect(cx + field_w // 2 - 158, 380, 158, 52)
-        self.login_lb_btn_rect  = pygame.Rect(cx - 100, 450, 200, 42)
+        field_w = 360
+        self.login_user_rect    = pygame.Rect(cx - field_w // 2, 220, field_w, 54)
+        self.login_pass_rect    = pygame.Rect(cx - field_w // 2, 304, field_w, 54)
+        self.login_btn_rect     = pygame.Rect(cx - 182, 392, 170, 54)
+        self.login_reg_btn_rect = pygame.Rect(cx + 12, 392, 170, 54)
+        self.login_lb_btn_rect  = pygame.Rect(cx - 120, 468, 240, 42)
 
         # --- Register screen rects ---
-        self.reg_user_rect    = pygame.Rect(cx - field_w // 2, 190, field_w, 52)
-        self.reg_pass_rect    = pygame.Rect(cx - field_w // 2, 272, field_w, 52)
-        self.reg_conf_rect    = pygame.Rect(cx - field_w // 2, 354, field_w, 52)
-        self.reg_create_rect  = pygame.Rect(cx - field_w // 2, 434, 158, 52)
-        self.reg_back_rect    = pygame.Rect(cx + field_w // 2 - 158, 434, 158, 52)
+        self.reg_user_rect    = pygame.Rect(cx - field_w // 2, 198, field_w, 54)
+        self.reg_pass_rect    = pygame.Rect(cx - field_w // 2, 280, field_w, 54)
+        self.reg_conf_rect    = pygame.Rect(cx - field_w // 2, 362, field_w, 54)
+        self.reg_create_rect  = pygame.Rect(cx - 182, 444, 170, 54)
+        self.reg_back_rect    = pygame.Rect(cx + 12, 444, 170, 54)
 
         # --- Leaderboard screen rect ---
         self.lb_back_rect = pygame.Rect(cx - 100, 528, 200, 46)
@@ -255,6 +290,7 @@ class GameManager:
         self.reg_success     = ""
 
         self.old_name = ""
+        self.fire_cooldown = 0
         self.reset_game()
 
     # ------------------------------------------------------------------
@@ -263,11 +299,14 @@ class GameManager:
     def reset_game(self):
         self.player  = Player(self.screen_width, self.screen_height, self.profile_ship_color)
         self.buttons = MobileButtons()
-        self.bullet  = None
+        self.bullets = []
+        self.enemy_bullets = []
         self.enemies = []
 
         self.score        = 0
         self.personal_best = 0
+        self.max_player_lives = 3
+        self.player_lives = self.max_player_lives
         self.spawn_number = DIFFICULTY_SPAWN.get(self.profile_difficulty, 5)
         self.game_state   = "login"
 
@@ -275,6 +314,11 @@ class GameManager:
         self.player_history = []
         self.timer        = 0
         self.state_timer  = 0
+        self.enemy_direction = 1
+        self.enemy_fire_timer = 0
+        self.fire_cooldown = 0
+        self.bullets = []
+        self.enemy_bullets = []
 
         # Clear auth fields on full reset
         self.login_username = self.player_name  # pre-fill if returning
@@ -359,8 +403,11 @@ class GameManager:
     # ------------------------------------------------------------------
     def spawn_enemies(self):
         self.enemies = []
+        self.enemy_direction = 1
         for i in range(self.spawn_number):
-            self.enemies.append(Enemy(i, self.spawn_number, self.screen_width, self.screen_height))
+            enemy = Enemy(i, self.spawn_number, self.screen_width, self.screen_height)
+            enemy.direction = self.enemy_direction
+            self.enemies.append(enemy)
         self.timer = 0
 
     # ------------------------------------------------------------------
@@ -456,17 +503,16 @@ class GameManager:
         draw_divider(self.screen, cx, 140, width=260, color=(0, 120, 55))
 
         # ── Card panel ─────────────────────────────────────────────
-        panel = pygame.Rect(cx - 200, 158, 400, 320)
-        pygame.draw.rect(self.screen, PANEL_BG, panel, border_radius=16)
-        pygame.draw.rect(self.screen, PANEL_BOR, panel, 2, border_radius=16)
+        panel = pygame.Rect(cx - 245, 170, 490, 340)
+        draw_panel(self.screen, panel, fill_color=PANEL_BG, border_color=PANEL_BOR, radius=22)
 
         # Column labels above fields
         lbl_u = self.tiny_font.render("USERNAME", True, (80, 90, 140))
         lbl_p = self.tiny_font.render("PASSWORD", True, (80, 90, 140))
-        self.screen.blit(lbl_u, (self.login_user_rect.x + 4,
-                                  self.login_user_rect.y - lbl_u.get_height() - 4))
-        self.screen.blit(lbl_p, (self.login_pass_rect.x + 4,
-                                  self.login_pass_rect.y - lbl_p.get_height() - 4))
+        self.screen.blit(lbl_u, (self.login_user_rect.x + 6,
+                                  self.login_user_rect.y - lbl_u.get_height() - 8))
+        self.screen.blit(lbl_p, (self.login_pass_rect.x + 6,
+                                  self.login_pass_rect.y - lbl_p.get_height() - 8))
 
         # Fields
         draw_text_field(self.screen, self.font, self.login_user_rect,
@@ -479,17 +525,17 @@ class GameManager:
         draw_button(self.screen, self.font, self.login_reg_btn_rect, "REGISTER", primary=False)
 
         # Divider between buttons and leaderboard
-        draw_divider(self.screen, cx, 444, width=360, color=(30, 34, 60))
+        draw_divider(self.screen, cx, 462, width=420, color=(30, 34, 60))
 
         # Leaderboard link
         draw_button(self.screen, self.small_font, self.login_lb_btn_rect, "  Leaderboard", primary=False)
 
         # Error message
         if self.login_error:
-            err_bg = pygame.Rect(cx - 185, 503, 370, 30)
+            err_bg = pygame.Rect(cx - 185, 515, 370, 30)
             pygame.draw.rect(self.screen, (50, 10, 10), err_bg, border_radius=6)
             err = self.small_font.render(self.login_error, True, RED_ERR)
-            self.screen.blit(err, (cx - err.get_width() // 2, 508))
+            self.screen.blit(err, (cx - err.get_width() // 2, 520))
 
         # Hint footer
         hint = self.tiny_font.render("Tab  switch field   •   Enter  login", True, (50, 54, 82))
@@ -570,9 +616,8 @@ class GameManager:
         draw_divider(self.screen, cx, 132, width=340, color=(0, 120, 55))
 
         # Panel
-        panel = pygame.Rect(cx - 200, 145, 400, 320)
-        pygame.draw.rect(self.screen, PANEL_BG, panel, border_radius=16)
-        pygame.draw.rect(self.screen, PANEL_BOR, panel, 2, border_radius=16)
+        panel = pygame.Rect(cx - 245, 155, 490, 340)
+        draw_panel(self.screen, panel, fill_color=PANEL_BG, border_color=PANEL_BOR, radius=22)
 
         # Field labels
         labels_data = [
@@ -595,7 +640,7 @@ class GameManager:
         draw_button(self.screen, self.font, self.reg_back_rect,   "< BACK", primary=False)
 
         # Error / success
-        msg_y = 498
+        msg_y = 520
         if self.reg_error:
             err_bg = pygame.Rect(cx - 185, msg_y - 3, 370, 30)
             pygame.draw.rect(self.screen, (50, 10, 10), err_bg, border_radius=6)
@@ -639,8 +684,7 @@ class GameManager:
 
         # Table panel
         table_rect = pygame.Rect(cx - 285, 126, 570, 384)
-        pygame.draw.rect(self.screen, PANEL_BG, table_rect, border_radius=14)
-        pygame.draw.rect(self.screen, PANEL_BOR, table_rect, 2, border_radius=14)
+        draw_panel(self.screen, table_rect, fill_color=PANEL_BG, border_color=PANEL_BOR, radius=18)
 
         # Header row
         header_y = 138
@@ -772,8 +816,7 @@ class GameManager:
 
         # Player info card (futuristic dashboard style)
         card = pygame.Rect(cx - 210, 142, 420, 96)
-        pygame.draw.rect(self.screen, PANEL_BG, card, border_radius=16)
-        pygame.draw.rect(self.screen, PANEL_BOR, card, 2, border_radius=16)
+        draw_panel(self.screen, card, fill_color=PANEL_BG, border_color=PANEL_BOR, radius=18)
 
         # Left Column: Pilot Username
         pilot_lbl = self.tiny_font.render("PILOT", True, (80, 90, 140))
@@ -890,35 +933,53 @@ class GameManager:
                 self.player.move_right()
 
             screen_button_fired = self.buttons.handle_mouse(self.player, events)
-            keyboard_fired = any(
-                e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE
-                for e in events
-            )
+            keyboard_fired = keys[pygame.K_SPACE]
 
-            if (screen_button_fired or keyboard_fired) and self.bullet is None:
+            if self.fire_cooldown > 0:
+                self.fire_cooldown -= 1
+
+            if (screen_button_fired or keyboard_fired) and self.fire_cooldown <= 0:
                 bullet_x = self.player.x + self.player.width // 2 - 16
-                self.bullet = Bullet(bullet_x, self.player.y)
+                self.bullets.append(Bullet(bullet_x, self.player.y, direction="up", speed=3.5, screen_height=self.screen_height))
+                self.fire_cooldown = 20
 
             self.player.keep_inside_screen()
 
-            if self.bullet:
-                self.bullet.update()
-                if not self.bullet.is_active:
-                    self.bullet = None
+            for bullet in self.bullets[:]:
+                bullet.update()
+                if not bullet.is_active:
+                    self.bullets.remove(bullet)
 
             self.timer += 1
-            if self.timer >= 180:
-                waiting = [e for e in self.enemies if e.state == "waiting"]
-                if waiting:
-                    chosen = random.choice(waiting)
-                    tx, ty = self.player_history[-1] if self.player_history else (self.player.x, self.player.y)
-                    chosen.start_drop(tx, ty)
-                    self.timer = 0
+            self.enemy_fire_timer += 1
+
+            alive_enemies = [e for e in self.enemies if e.state in ("waiting", "dropping")]
+            if alive_enemies:
+                min_x = min(e.x for e in alive_enemies)
+                max_x = max(e.x + e.width for e in alive_enemies)
+                if min_x <= 0 or max_x >= self.screen_width:
+                    self.enemy_direction *= -1
+                    for enemy in alive_enemies:
+                        enemy.y += enemy.vertical_step
+
+            for enemy in self.enemies:
+                enemy.update(self.enemy_direction)
+
+            if self.enemy_fire_timer >= 90:
+                can_fire = [e for e in self.enemies if e.state in ("waiting", "dropping", "limit")]
+                if can_fire:
+                    shooter = random.choice(can_fire)
+                    bullet_x = shooter.x + shooter.width // 2 - 12
+                    bullet_y = shooter.y + shooter.height - 8
+                    self.enemy_bullets.append(Bullet(bullet_x, bullet_y, direction="down", speed=2.5, screen_height=self.screen_height))
+                self.enemy_fire_timer = 0
+
+            for enemy_bullet in self.enemy_bullets[:]:
+                enemy_bullet.update()
+                if not enemy_bullet.is_active:
+                    self.enemy_bullets.remove(enemy_bullet)
 
             all_despawned = all(e.state == "offscreen" for e in self.enemies)
-            for enemy in self.enemies:
-                enemy.update()
-
             if all_despawned:
                 self.spawn_number += 1
                 self.spawn_enemies()
@@ -932,14 +993,20 @@ class GameManager:
                 enemy.update()
 
             if self.state_timer >= 180:
-                # Save score live to DB immediately
-                self.db.save_score(self.player_name, self.score)
-                # Update personal best if beaten
-                if self.score > self.personal_best:
-                    self.personal_best = self.score
-                # Refresh leaderboard
-                self.leaderboard = self.db.get_top_scores(limit=10)
-                self.game_state = "game_over"
+                if self.player_lives <= 0:
+                    self.db.save_score(self.player_name, self.score)
+                    if self.score > self.personal_best:
+                        self.personal_best = self.score
+                    self.leaderboard = self.db.get_top_scores(limit=10)
+                    self.game_state = "game_over"
+                else:
+                    self.game_state = "playing"
+                    self.player.is_blinking = False
+                    self.player.visible = True
+                    self.player.x = self.screen_width // 2 - self.player.width // 2
+                    self.player.y = self.screen_height - 100
+                    self.bullets = []
+                    self.enemy_bullets = []
 
         # --- Draw playing / blinking ---
         self.screen.fill(DARK_BG)
@@ -948,8 +1015,10 @@ class GameManager:
         self.player.draw(self.screen)
         for enemy in self.enemies:
             enemy.draw(self.screen)
-        if self.bullet:
-            self.bullet.draw(self.screen)
+        for bullet in self.bullets:
+            bullet.draw(self.screen)
+        for enemy_bullet in self.enemy_bullets:
+            enemy_bullet.draw(self.screen)
         self.buttons.draw(self.screen)
 
         # HUD — score chip (compact layout)
@@ -971,6 +1040,17 @@ class GameManager:
         
         pb_val = render_retro_score(self.personal_best, GOLD, scale=1.8)
         self.screen.blit(pb_val, (84, 61))
+
+        lives_bg = pygame.Rect(self.screen_width - 190, 58, 170, 38)
+        pygame.draw.rect(self.screen, (14, 16, 36), lives_bg, border_radius=8)
+        pygame.draw.rect(self.screen, (40, 44, 80), lives_bg, 1, border_radius=8)
+        lives_lbl = self.tiny_font.render("LIVES", True, (200, 100, 110))
+        self.screen.blit(lives_lbl, (self.screen_width - 180, 68))
+
+        heart_x = self.screen_width - 128
+        for i in range(self.max_player_lives):
+            heart_color = (255, 80, 90) if i < self.player_lives else (80, 80, 90)
+            draw_heart(self.screen, heart_x + i * 24, 66, heart_color, size=14)
 
         # HUD — right side hints
         ctrl_hint = "← → Move  |  SPACE Shoot" if self.profile_control == "arrows" else "A D Move  |  SPACE Shoot"
@@ -1089,6 +1169,17 @@ class GameManager:
     # ------------------------------------------------------------------
     # Collision detection
     # ------------------------------------------------------------------
+    def _take_hit(self):
+        if self.player.is_blinking or self.game_state != "playing":
+            return
+
+        self.player_lives -= 1
+        self.player.is_blinking = True
+        self.game_state = "blinking"
+        self.state_timer = 0
+        self.bullets = []
+        self.enemy_bullets = []
+
     def check_collisions(self):
         player_rect = self.player.get_rect()
 
@@ -1099,13 +1190,18 @@ class GameManager:
             enemy_rect = enemy.get_rect()
 
             if player_rect.colliderect(enemy_rect):
-                self.game_state   = "blinking"
-                self.player.is_blinking = True
-                self.state_timer  = 0
+                self._take_hit()
                 return
 
-            if self.bullet and self.bullet.get_rect().colliderect(enemy_rect):
-                enemy.state  = "offscreen"
-                self.bullet  = None
-                self.score  += 1
-                break
+            for bullet in self.bullets[:]:
+                if bullet.get_rect().colliderect(enemy_rect):
+                    enemy.state = "offscreen"
+                    bullet.is_active = False
+                    self.score += 1
+                    break
+
+        for enemy_bullet in self.enemy_bullets[:]:
+            if enemy_bullet.get_rect().colliderect(player_rect):
+                enemy_bullet.is_active = False
+                self._take_hit()
+                return

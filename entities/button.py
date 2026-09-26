@@ -12,16 +12,17 @@ class MobileButtons:
         pygame.draw.rect(screen, (200, 50, 50), self.fire)
 
     def handle_mouse(self, player, events):
-       
         mouse_pressed = pygame.mouse.get_pressed()
+        mouse_pos = pygame.mouse.get_pos()
+
         if mouse_pressed[0]:
-            mouse_pos = pygame.mouse.get_pos()
             if self.left.collidepoint(mouse_pos):
                 player.move_left()
             if self.right.collidepoint(mouse_pos):
                 player.move_right()
+            if self.fire.collidepoint(mouse_pos):
+                return True
 
-        
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.fire.collidepoint(event.pos):
