@@ -1,32 +1,35 @@
 # Space Invaders
 This is a **weekly commit project** where features and improvements are added incrementally each week.
 
-## Latest Update — Week 4
+## Latest Update — Arcade Combat & Wave Tuning
 
-### 🔐 Secure Login & Registration Flow
-- Added proper **Login** and **Registration** screens to authenticate players.
-- Implemented secure password storage using SHA-256 hashing (built-in `hashlib` library).
-- Enforced validation rules (username 3+ chars, password 4+ chars, and matching password confirmations).
-- Supported auto-login directly after successful registration.
+### 🎮 Classic Enemy Formation Movement
+- Enemies now drift in a slower, more deliberate side-to-side sweep instead of feeling overly aggressive.
+- The formation turns around with a cleaner rhythm at the screen edges, creating a more classic arcade flow.
+- Enemy ships stay inside a controlled upper-middle play area and do not drop below the intended battle zone.
+- Enemy spacing and staggered wave layout now read more like a traditional Space Invaders formation.
 
-### 🏆 Unique High-Score Leaderboards
-- Transitioned the leaderboard to display **only the highest score for each unique player** (lower, older scores for the same username are automatically filtered out).
-- Renders a clean table with ranks, player names, scores, and dates.
-- Features special gold, silver, and bronze highlights for top 3 positions.
-- Highlights the currently logged-in user's entry in a green indicator strip.
+### 🔫 Hold-to-Fire Combat
+- Holding the fire key now continuously shoots with a controlled cooldown instead of requiring repeated taps.
+- Player bullets have been slowed down slightly for more readable, arcade-style pacing.
+- Enemy bullets fire in a straight vertical line and remain within the intended playfield behavior.
 
-### 💾 Live Database Score Saving
-- Game scores are captured and written to the database **live** as soon as the blinking game-over sequence completes.
-- Keeps track of and displays your **Personal Best** high score on the menu screen and during gameplay.
+### ❤️ Three-Heart Life System
+- The player now starts with **3 hearts**.
+- Each hit removes one heart, and the ship briefly blinks while invulnerable after damage.
+- Once all hearts are lost, the game ends and the score flow continues into the leaderboard/database save flow.
 
-### 🎨 Visual Redesign & Retro UI Polish
-- **8-Bit Retro Pixel Scores**: Scores (current, best, final) are now rendered in a pixelated retro gaming font by drawing text at a low size and scaling it up without anti-aliasing.
-- **HUD Redesign**: Redesigned the Score and Best chips into a compact, space-efficient side-by-side layout using pixelated scoring.
-- **Layout Spacing Fixes**: Adjusted card heights and layout coordinate margins on the Game Over screen to prevent buttons and scores from overlapping or going off-screen.
-- **Glassmorphic Glows**: Main headings now feature a soft, neon glow underneath the title text.
-- **Focused States**: Input fields glow when active, and passwords display masked with circular `●` characters.
-- **Floating Labels**: All-caps badges float cleanly above their respective inputs.
-- **Twinkling Star-Field**: A moving background added to all menu screens for a space vibe.
+### 🎨 HUD & Visual Polish
+- The heart icon has been replaced with a cleaner custom-drawn shape instead of a red box/generic placeholder.
+- Enemy ships are slightly smaller to improve readability and fit the arcade formation better.
+- The background now uses a moving, glowing space scene with a starfield and soft nebula-like atmosphere.
+- The overall combat feel is smoother and more faithful to classic Space Invaders pacing.
+
+### 🏆 Existing Systems Still Included
+- Secure login and registration flow with password hashing.
+- High-score leaderboard filtered to the best score per player.
+- Persistent database-backed score saving and personal best tracking.
+- Retro UI styling, glowing panels, and an animated space backdrop.
 
 ---
 
