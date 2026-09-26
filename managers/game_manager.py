@@ -170,23 +170,55 @@ def draw_glow_title(screen, big_font, text, cx, y, color=ACCENT_2):
 
 
 def draw_stars(screen, stars):
-    """Draw a simple star-field background."""
+    """Draw a galaxy-like backdrop with soft nebula glow and slow cosmic drift."""
+    screen_w, screen_h = screen.get_size()
     t = pygame.time.get_ticks()
-    for i, (x, y, r, brightness) in enumerate(stars):
-        flicker = int(brightness + 30 * ((t // 800 + i * 37) % 3 - 1) * 0.3)
-        flicker = max(60, min(220, flicker))
-        pygame.draw.circle(screen, (flicker, flicker, flicker), (x, y), r)
+
+    glow = pygame.Surface((screen_w, screen_h), pygame.SRCALPHA)
+    nebulae = [
+        ((screen_w * 0.28, screen_h * 0.28), 220, (110, 70, 180, 26)),
+        ((screen_w * 0.72, screen_h * 0.42), 260, (180, 90, 160, 22)),
+        ((screen_w * 0.55, screen_h * 0.68), 190, (70, 120, 200, 20)),
+    ]
+
+    for (cx, cy), radius, color in nebulae:
+        pygame.draw.ellipse(glow, color, (cx - radius, cy - radius, radius * 2, radius * 2))
+
+    screen.blit(glow, (0, 0))
+
+    for i, star in enumerate(stars):
+        x, y, r, brightness, speed, drift = star
+
+        x = (x + drift * 0.10) % (screen_w + 20)
+        y += speed * 0.45
+
+        if y > screen_h + 10:
+            y = -5
+            x = random.randint(0, screen_w)
+
+        flicker = int(brightness + 16 * ((t // 1400 + i * 13) % 3 - 1) * 0.2)
+        flicker = max(90, min(220, flicker))
+
+        star_color = (flicker, flicker, min(255, flicker + 35))
+        pygame.draw.circle(screen, star_color, (int(x), int(y)), max(1, r))
+
+        if r >= 2:
+            pygame.draw.circle(screen, (255, 230, 255), (int(x), int(y)), 1)
+
+        stars[i] = (x, y, r, brightness, speed, drift)
 
 
-def generate_stars(screen_width, screen_height, count=150):
-    """Generate random star positions for background."""
+def generate_stars(screen_width, screen_height, count=70):
+    """Generate a galaxy-inspired star field with low motion and soft neon tones."""
     stars = []
     for _ in range(count):
         x = random.randint(0, screen_width)
         y = random.randint(0, screen_height)
-        r = random.choice([1, 1, 1, 2])
-        b = random.randint(50, 170)
-        stars.append((x, y, r, b))
+        r = random.choice([1, 1, 1, 2, 2, 2, 3])
+        b = random.randint(110, 200)
+        speed = random.uniform(0.08, 0.5)
+        drift = random.uniform(-0.2, 0.2)
+        stars.append((x, y, r, b, speed, drift))
     return stars
 
 

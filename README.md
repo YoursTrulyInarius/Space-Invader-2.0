@@ -22,14 +22,22 @@ This is a **weekly commit project** where features and improvements are added in
 ### 🎨 HUD & Visual Polish
 - The heart icon has been replaced with a cleaner custom-drawn shape instead of a red box/generic placeholder.
 - Enemy ships are slightly smaller to improve readability and fit the arcade formation better.
+<<<<<<< HEAD
 - The background now uses a galaxy-inspired scene with soft nebula glow, cooler cosmic colors, and a subtle drifting space feel.
+=======
+- The background now uses a moving, glowing space scene with a starfield and soft nebula-like atmosphere.
+>>>>>>> f1cd83b785ac44e46aabccd14d74ffcc5ec5258e
 - The overall combat feel is smoother and more faithful to classic Space Invaders pacing.
 
 ### 🏆 Existing Systems Still Included
 - Secure login and registration flow with password hashing.
 - High-score leaderboard filtered to the best score per player.
 - Persistent database-backed score saving and personal best tracking.
+<<<<<<< HEAD
 - Retro UI styling, glowing panels, and an animated galaxy backdrop.
+=======
+- Retro UI styling, glowing panels, and an animated space backdrop.
+>>>>>>> f1cd83b785ac44e46aabccd14d74ffcc5ec5258e
 
 ---
 
