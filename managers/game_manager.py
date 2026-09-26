@@ -216,11 +216,11 @@ def draw_heart(screen, x, y, color, size=14):
     pygame.draw.circle(surface, color, (cx + size // 2, cy - size // 3), size // 2)
     pygame.draw.polygon(surface, color, [
         (cx, cy + size // 2),
-        (cx - size, cy - size // 4),
+        (cx - size, cy),
         (cx - size // 2, cy - size),
         (cx, cy - size // 2),
         (cx + size // 2, cy - size),
-        (cx + size, cy - size // 4),
+        (cx + size, cy),
     ])
     screen.blit(surface, (x, y))
 
@@ -407,6 +407,7 @@ class GameManager:
         for i in range(self.spawn_number):
             enemy = Enemy(i, self.spawn_number, self.screen_width, self.screen_height)
             enemy.direction = self.enemy_direction
+            enemy.y = 100 + (i % 4) * 34
             self.enemies.append(enemy)
         self.timer = 0
 
@@ -953,25 +954,23 @@ class GameManager:
             self.timer += 1
             self.enemy_fire_timer += 1
 
-            alive_enemies = [e for e in self.enemies if e.state in ("waiting", "dropping")]
+            alive_enemies = [e for e in self.enemies if e.state == "waiting"]
             if alive_enemies:
                 min_x = min(e.x for e in alive_enemies)
                 max_x = max(e.x + e.width for e in alive_enemies)
                 if min_x <= 0 or max_x >= self.screen_width:
                     self.enemy_direction *= -1
-                    for enemy in alive_enemies:
-                        enemy.y += enemy.vertical_step
 
             for enemy in self.enemies:
                 enemy.update(self.enemy_direction)
 
             if self.enemy_fire_timer >= 90:
-                can_fire = [e for e in self.enemies if e.state in ("waiting", "dropping", "limit")]
+                can_fire = [e for e in self.enemies if e.state == "waiting"]
                 if can_fire:
                     shooter = random.choice(can_fire)
                     bullet_x = shooter.x + shooter.width // 2 - 12
                     bullet_y = shooter.y + shooter.height - 8
-                    self.enemy_bullets.append(Bullet(bullet_x, bullet_y, direction="down", speed=2.5, screen_height=self.screen_height))
+                    self.enemy_bullets.append(Bullet(bullet_x, bullet_y, direction="down", speed=2.0, screen_height=self.screen_height))
                 self.enemy_fire_timer = 0
 
             for enemy_bullet in self.enemy_bullets[:]:

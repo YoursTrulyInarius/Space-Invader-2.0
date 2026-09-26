@@ -19,10 +19,12 @@ class Bullet:
         self.x += self.vx
         self.y += self.vy
 
-        if self.direction == "up" and self.y < -self.height:
-            self.is_active = False
-        elif self.direction == "down" and self.y > self.screen_height + self.height:
-            self.is_active = False
+        if self.direction == "up":
+            if self.y < -self.height:
+                self.is_active = False
+        else:
+            if self.y > self.screen_height + self.height:
+                self.is_active = False
 
     def get_rect(self):
         return pygame.Rect(self.x, self.y, self.width, self.height)
