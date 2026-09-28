@@ -1,6 +1,6 @@
 # Space Invaders
 This is a **weekly commit project** where features and improvements are added incrementally each week.
-a
+
 ## Latest Update — Arcade Combat & Wave Tuning
 
 ### 🎮 Classic Enemy Formation Movement
