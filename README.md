@@ -1,7 +1,6 @@
 # Space Invaders
 This is a **weekly commit project** where features and improvements are added incrementally each week.
-aaaaaaaa
-## Latest Update — Arcade Combat & Wave Tuning
+aaaaaaaa## Latest Update — Arcade Combat & Wave Tuning
 
 ### 🎮 Classic Enemy Formation Movement
 - Enemies now drift in a slower, more deliberate side-to-side sweep instead of feeling overly aggressive.
